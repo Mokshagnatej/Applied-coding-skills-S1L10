@@ -27,6 +27,14 @@
 |:---:|:---:|
 | Java | **101** |
 
+## 📅 Weekly Modules
+
+- [Week 1: Arrays, Strings, Two Pointers & Binary Search](./Week-1/README.md)
+- [Week 2: Linked Lists & Pointer Manipulation](./Week-2/README.md)
+- [Week 3: Stacks, Monotonic Stacks & Simulation](./Week-3/README.md)
+- [Week 4: Queues, Ring Buffers, Monotonic Deques & Tree BFS](./Week-4/README.md)
+- [Week 5: Binary Trees, DFS & Recursion](./Week-5/README.md)
+
 ## 📂 Repository Structure
 
 ```
