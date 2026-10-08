@@ -154,63 +154,128 @@ return -1;  // Target not found
 
 ### `0075` • Sort Colors
 - **What it's really asking:** Partition the array into three groups (0s, 1s, 2s) in-place, in a single pass.
-- **Concept:** Dijkstra's three-way partitioning — three pointers maintain invariant boundaries as `mid` scans left to right.
+- **Intuition:** Imagine sorting three distinct items. We can build the 0s from the left edge and the 2s from the right edge, letting the 1s naturally gather in the middle.
+- **Step-by-Step Logic:**
+  1. Maintain three pointers: `low = 0` (where next 0 goes), `high = n - 1` (where next 2 goes), and `mid = 0` (current scanner).
+  2. While `mid <= high`:
+     - If `nums[mid] == 0`: swap it with `nums[low]`, then increment both `low` and `mid`.
+     - If `nums[mid] == 1`: it's already in the correct middle section, just increment `mid`.
+     - If `nums[mid] == 2`: swap it with `nums[high]`, and decrement `high`. Do *not* increment `mid` yet, because the element we just swapped in from the right needs to be evaluated.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$ in-place.
 - **Edge Cases:** All identical elements (`[2,2,2]`), already sorted (`[0,1,2]`), two-element arrays, empty array.
 - **Interview Tip:** If asked "can you do better than sort?", this is the answer — single-pass $\mathcal{O}(N)$ partitioning.
 
 ### `0121` • Best Time to Buy and Sell Stock
 - **What it's really asking:** Find the maximum difference `prices[j] - prices[i]` where `j > i` (you must buy before you sell).
-- **Concept:** Greedy single-pass: maintain a running minimum price seen so far. At each step, the potential profit is `current_price - min_price_so_far`. Track the maximum of all such profits.
+- **Intuition:** You always want to buy at the absolute lowest price seen *before* the current day. So, as you iterate through time, keep a running record of the cheapest day so far.
+- **Step-by-Step Logic:**
+  1. Initialize `minPrice = Integer.MAX_VALUE` and `maxProfit = 0`.
+  2. Loop through each `price` in the array.
+  3. Update `minPrice` to be the minimum of `minPrice` and the current `price`.
+  4. Calculate the potential profit if you sold today: `currentProfit = price - minPrice`.
+  5. Update `maxProfit` to be the maximum of `maxProfit` and `currentProfit`.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$.
 - **Edge Cases:** Strictly decreasing prices (`[7,6,4,3,1]` → profit is `0`), single-day array, all prices identical.
-- **Why greedy works:** You always want to buy at the cheapest past price — there's no benefit to tracking anything other than the global minimum.
+- **Why greedy works:** There's no benefit to tracking anything other than the global minimum encountered so far.
 
 ### `0219` • Contains Duplicate II
 - **What it's really asking:** Are there two indices `i` and `j` such that `nums[i] == nums[j]` and `|i - j| <= k`?
-- **Concept:** Sliding window of size $k$ using a `HashSet`. As the window slides right, add the new element and remove the element that just fell out of the window. If the element being added is already in the set, we found our duplicate within distance $k$.
+- **Intuition:** Instead of checking all previous $k$ elements for every number, we can maintain a sliding window (or use a HashMap to store the most recent index of each number).
+- **Step-by-Step Logic:**
+  1. Initialize a `HashMap` mapping values to their most recent index.
+  2. Loop through the array with index `i`.
+  3. If `nums[i]` is already in the map, check if `i - map.get(nums[i]) <= k`. If yes, return `true`.
+  4. Otherwise, update the map with the new index: `map.put(nums[i], i)`.
+  5. If the loop finishes without returning, return `false`.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(\min(N, k))$.
 - **Edge Cases:** $k \ge N$ (entire array is the window), duplicates separated by more than $k$, $k = 0$.
 
 ### `0283` • Move Zeroes
 - **What it's really asking:** Move all zeroes to the end while preserving the relative order of non-zero elements, in-place.
-- **Concept:** Fast-slow pointer technique. `slow` marks the insertion position for the next non-zero element. `fast` scans ahead looking for non-zeroes. When `fast` finds one, swap it into position `slow` and advance both. This naturally pushes all zeroes to the end.
+- **Intuition:** We can partition the array into a non-zero segment on the left and a zero segment on the right. A slow pointer tracks where the next non-zero element should go, while a fast pointer scans for them.
+- **Step-by-Step Logic:**
+  1. Initialize `slow = 0`.
+  2. Iterate through the array with `fast = 0` to `n - 1`.
+  3. If `nums[fast]` is non-zero, swap it with `nums[slow]`.
+  4. Increment `slow` to prepare for the next non-zero element.
+  5. By the end, all non-zeroes are shifted left, leaving zeroes naturally at the right.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$ in-place.
 - **Edge Cases:** No zeroes, all zeroes, zeroes already at the back, single element.
 
 ### `0344` • Reverse String
 - **What it's really asking:** Reverse a character array in-place using $\mathcal{O}(1)$ extra memory.
-- **Concept:** Classic two-pointer convergence — pointers at positions `0` and `N-1` swap characters and move inward until they meet or cross.
+- **Intuition:** Reversing is just swapping elements symmetrically across the center.
+- **Step-by-Step Logic:**
+  1. Place `left` pointer at index `0` and `right` pointer at `N - 1`.
+  2. While `left < right`:
+     - Store the character at `left` in a temporary variable.
+     - Copy the character at `right` to `left`.
+     - Copy the temporary variable to `right`.
+     - Increment `left` and decrement `right`.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$.
 - **Edge Cases:** Single character (no-op), even vs odd length strings (both work identically because the middle character of an odd-length string stays in place).
 
 ### `0387` • First Unique Character in a String
 - **What it's really asking:** Find the index of the first character that appears exactly once.
-- **Concept:** Two-pass approach with a direct-addressed frequency table `int[26]`. Pass 1 counts character frequencies. Pass 2 scans left-to-right and returns the first index with count `1`. Using `int[26]` instead of `HashMap` avoids auto-boxing overhead and is cache-friendly.
+- **Intuition:** Since we only have 26 lowercase English letters, a small fixed-size array is a lightning-fast hash map for counting occurrences.
+- **Step-by-Step Logic:**
+  1. Create a frequency array: `int[] count = new int[26]`.
+  2. First pass: iterate over the string. For each char `c`, increment `count[c - 'a']`.
+  3. Second pass: iterate over the string again. For each char `c`, check if `count[c - 'a'] == 1`.
+  4. Return the index of the first character that satisfies the condition.
+  5. If the loop completes without returning, return `-1`.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$ (fixed 26-character alphabet = constant space).
 - **Edge Cases:** No unique characters, unique character at index 0 or $N-1$, single character string.
 
 ### `0704` • Binary Search
 - **What it's really asking:** Find the index of a target value in a sorted array, or return -1.
-- **Concept:** Classical divide-and-conquer on sorted ranges. Each comparison eliminates half the remaining candidates. The key implementation detail is the overflow-safe midpoint calculation.
+- **Intuition:** Think of looking up a word in a dictionary. You open to the middle; if the word is alphabetically earlier, you ignore the right half and repeat.
+- **Step-by-Step Logic:**
+  1. Initialize `left = 0` and `right = nums.length - 1`.
+  2. While `left <= right`:
+     - Calculate the middle index safely: `mid = left + (right - left) / 2`.
+     - If `nums[mid] == target`, you found it! Return `mid`.
+     - If `nums[mid] < target`, the target must be on the right. Move `left = mid + 1`.
+     - If `nums[mid] > target`, the target must be on the left. Move `right = mid - 1`.
+  3. Return `-1` if the loop finishes.
 - **Complexity:** Time: $\mathcal{O}(\log N)$ | Space: $\mathcal{O}(1)$.
 - **Edge Cases:** Target smaller than minimum, larger than maximum, not present, single element array, array of length 1 where element equals target.
 
 ### `0977` • Squares of a Sorted Array
 - **What it's really asking:** Square every element and return the result in sorted order, in $\mathcal{O}(N)$ time.
-- **Concept:** In a sorted array with negatives, the largest squares live at the extremes. Two pointers compare absolute magnitudes from both ends, placing the larger squared value at the current tail of the result array. This avoids an $\mathcal{O}(N \log N)$ post-sort.
+- **Intuition:** Squaring negative numbers makes them positive, so the largest squares will always be at the extreme left or extreme right of the original sorted array.
+- **Step-by-Step Logic:**
+  1. Initialize `left = 0`, `right = n - 1`.
+  2. Create an output array of the same size, and a pointer `idx = n - 1` to fill it backwards.
+  3. While `left <= right`:
+     - Compare the absolute values (or squared values) of `nums[left]` and `nums[right]`.
+     - If `nums[left]` squared is larger, place it at `result[idx]`, and increment `left`.
+     - Otherwise, place `nums[right]` squared at `result[idx]`, and decrement `right`.
+     - Decrement `idx`.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(N)$ for output.
 - **Edge Cases:** All negative, all positive, mixed with zero, single element.
 
 ### `1480` • Running Sum of 1d Array
 - **What it's really asking:** Compute the prefix sum array where `result[i] = sum(nums[0..i])`.
-- **Concept:** Simplest prefix sum: `nums[i] += nums[i - 1]` in-place. This builds the running total incrementally — each element becomes the sum of itself and everything before it.
+- **Intuition:** We don't need to recalculate the sum from scratch for each position. The sum up to index `i` is simply the sum up to index `i-1` plus the value at index `i`.
+- **Step-by-Step Logic:**
+  1. Start a loop from `i = 1` up to `n - 1`.
+  2. Update the current element: `nums[i] = nums[i] + nums[i - 1]`.
+  3. This modifies the array in-place, transforming it into a prefix sum array.
+  4. Return the modified `nums` array.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$ in-place.
 - **Edge Cases:** Single element, large values close to integer overflow (use `long` if needed).
 
 ### `1685` • Sum of Absolute Differences in a Sorted Array
 - **What it's really asking:** For each element, compute the sum of `|nums[i] - nums[j]|` for all `j ≠ i`. The array is sorted.
-- **Concept:** Since the array is sorted, we can decompose each element's contribution using prefix and total sums. Elements to the left are all smaller (no absolute value needed — just `i * nums[i] - leftSum`), and elements to the right are all larger (`rightSum - (n-1-i) * nums[i]`). This mathematical insight transforms $\mathcal{O}(N^2)$ brute force into $\mathcal{O}(N)$.
+- **Intuition:** For a given element `nums[i]`, all elements to its left are smaller and all to its right are larger. We can use prefix and suffix sums to bulk-calculate the differences instead of iterating pair-by-pair.
+- **Step-by-Step Logic:**
+  1. Compute the total sum of the array.
+  2. Initialize `leftSum = 0` and iterate `i` from `0` to `n - 1`.
+  3. The sum of elements to the right is `rightSum = totalSum - leftSum - nums[i]`.
+  4. The contribution from elements on the left is `i * nums[i] - leftSum`.
+  5. The contribution from elements on the right is `rightSum - (n - 1 - i) * nums[i]`.
+  6. Add both contributions to get the result for index `i`, then add `nums[i]` to `leftSum`.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$ auxiliary.
 - **Edge Cases:** All identical elements (all results are 0), two-element array.
 

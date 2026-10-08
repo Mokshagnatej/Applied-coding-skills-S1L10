@@ -146,52 +146,114 @@ return pA;  // Intersection node, or null if no intersection
 
 ### `0021` • Merge Two Sorted Lists
 - **What it's really asking:** Interleave two sorted lists into one sorted list, using only pointer manipulation (no new nodes).
-- **Concept:** Create a dummy sentinel node as the merge head. Compare the current heads of both lists, attach the smaller one to the merged tail, and advance that list's pointer. When one list is exhausted, attach the remainder of the other.
+- **Intuition:** Think of merging two sorted decks of cards face up. You compare the top card of both decks, take the smaller one, and put it face down on a new pile. Repeat until one deck is empty, then stack the rest of the other deck.
+- **Step-by-Step Logic:**
+  1. Create a `dummy` node to act as the start of the merged list, and a `curr` pointer pointing to it.
+  2. While both `list1` and `list2` are not null:
+     - Compare `list1.val` and `list2.val`.
+     - Attach the node with the smaller value to `curr.next`.
+     - Advance the chosen list's pointer (`list1 = list1.next` or `list2 = list2.next`).
+     - Advance `curr`.
+  3. Once the loop ends, one list might still have remaining nodes. Simply attach it: `curr.next = list1 != null ? list1 : list2`.
+  4. Return `dummy.next`.
 - **Complexity:** Time: $\mathcal{O}(N + M)$ | Space: $\mathcal{O}(1)$ — only pointer rewiring, no new node allocation.
 - **Edge Cases:** One or both lists empty, lists of very different lengths (1 vs 10000), all elements of one list smaller than all elements of the other.
 - **Foundation for:** This is the building block of merge sort and the k-way merge in problem `0023`.
 
 ### `0023` • Merge k Sorted Lists
 - **What it's really asking:** Merge $K$ individually sorted linked lists into one globally sorted list, efficiently.
-- **Concept:** Use a min-heap (`PriorityQueue`) of size $K$, initially containing the head node of each list. Extract the minimum, append it to the result, and push its `.next` (if it exists) back into the heap. The heap always holds at most $K$ elements, so each extraction/insertion is $\mathcal{O}(\log K)$.
+- **Intuition:** Instead of scanning all $K$ lists to find the smallest node every time, we can use a Min-Heap. The heap acts like an intelligent sorting funnel that always gives us the smallest available node in logarithmic time.
+- **Step-by-Step Logic:**
+  1. Create a `PriorityQueue` (Min-Heap) that compares `ListNode` values.
+  2. Iterate through the array of lists and push the head node of each non-empty list into the heap.
+  3. Create a `dummy` node and a `curr` pointer.
+  4. While the heap is not empty:
+     - Pop the smallest node from the heap and attach it to `curr.next`.
+     - Move `curr` forward.
+     - If the popped node has a `.next` node, push that `.next` node into the heap.
+  5. Return `dummy.next`.
 - **Complexity:** Time: $\mathcal{O}(N \log K)$ where $N$ is the total number of nodes across all lists | Space: $\mathcal{O}(K)$ for the heap.
 - **Edge Cases:** $K = 0$, array contains empty lists (`[[], []]`), single list in the array.
 - **Alternative:** Divide-and-conquer pairwise merging also achieves $\mathcal{O}(N \log K)$ but is harder to implement correctly.
 
 ### `0025` • Reverse Nodes in k-Group
 - **What it's really asking:** Reverse every consecutive group of $K$ nodes. If the remaining nodes are fewer than $K$, leave them as-is.
-- **Concept:** First, count whether $K$ nodes are available ahead. If yes, reverse that segment using the standard reversal technique, then recursively/iteratively process the rest. The tricky part is reconnecting: the tail of the reversed segment must point to the head of the next processed segment.
+- **Intuition:** We can process the list in blocks of size $K$. For each block, we check if it has $K$ elements. If so, we detach it, reverse it like a normal linked list, and then stitch it back into the main list.
+- **Step-by-Step Logic:**
+  1. Create a `dummy` node pointing to `head` and maintain a `prevGroupTail` pointing to `dummy`.
+  2. Loop indefinitely:
+     - Use a pointer `kth` to find the $K$-th node from `prevGroupTail`. If it's null, we don't have enough nodes, so `break`.
+     - Save `nextGroupHead = kth.next`.
+     - Disconnect the current group: `kth.next = null`.
+     - Reverse the current group (from `prevGroupTail.next` to `kth`).
+     - The old head of this group (which is now its tail) should point to `nextGroupHead`.
+     - The `prevGroupTail.next` should point to the new head (`kth`).
+     - Advance `prevGroupTail` to the new tail of this group.
+  3. Return `dummy.next`.
 - **Complexity:** Time: $\mathcal{O}(N)$ — each node is visited twice (once to count, once to reverse) | Space: $\mathcal{O}(1)$ iterative.
 - **Edge Cases:** List length $< K$ (no reversal), length not a multiple of $K$ (last incomplete group stays unchanged), $K = 1$ (identity operation).
 
 ### `0142` • Linked List Cycle II
 - **What it's really asking:** If a cycle exists, return the node where the cycle begins. If no cycle, return `null`.
-- **Concept:** Floyd's Tortoise and Hare with the two-phase entrance detection (see Pattern Deep Dive above). The mathematical proof guarantees that after the meeting point, resetting one pointer to head and advancing both at speed 1 will produce a collision at the exact cycle entrance.
+- **Intuition:** Using Floyd's Cycle-Finding Algorithm (Tortoise and Hare), the fast runner and slow runner will eventually meet in a loop. When they do, the distance from the head to the loop entrance is exactly equal to the distance from their meeting point to the loop entrance.
+- **Step-by-Step Logic:**
+  1. Initialize `slow` and `fast` pointers to `head`.
+  2. Phase 1 (Intersection): Move `slow` by 1 step, `fast` by 2 steps until they meet. If `fast` or `fast.next` becomes null, there's no cycle. Return null.
+  3. Phase 2 (Entrance): Once they meet, reset one pointer (e.g., a new `ptr`) to the `head`.
+  4. Move `ptr` and `slow` by 1 step at a time. The node where they collide is the cycle's starting node.
+  5. Return that node.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$ — no hash set needed!
 - **Edge Cases:** No cycle, cycle comprises the entire list (tail points to head), single node pointing to itself, two-node cycle.
 
 ### `0160` • Intersection of Two Linked Lists
 - **What it's really asking:** Two singly-linked lists may converge into a shared suffix. Find the node where they first merge, or return `null`.
-- **Concept:** The cross-traversal trick (see Pattern Deep Dive) naturally equalizes path lengths without needing to compute list lengths explicitly.
+- **Intuition:** If list A is shorter than list B, a pointer tracing A will reach the end first. If we then teleport it to the start of B, and do the same for the other pointer, they will magically align and hit the intersection at the exact same time.
+- **Step-by-Step Logic:**
+  1. Initialize `pA = headA` and `pB = headB`.
+  2. While `pA != pB`:
+     - If `pA` is null, redirect it to `headB`. Otherwise, move it to `pA.next`.
+     - If `pB` is null, redirect it to `headA`. Otherwise, move it to `pB.next`.
+  3. They will eventually meet at the intersection node or both hit `null` simultaneously if there's no intersection.
+  4. Return `pA` (or `pB`).
 - **Complexity:** Time: $\mathcal{O}(N + M)$ | Space: $\mathcal{O}(1)$.
 - **Edge Cases:** No intersection, intersection at the very first node, one list is much longer than the other.
 
 ### `0206` • Reverse Linked List
 - **What it's really asking:** Reverse the direction of all pointers in a singly linked list.
-- **Concept:** The foundational 3-pointer slide: `prev`, `curr`, `nextTemp`. At each step: save `curr.next`, point `curr.next` to `prev`, advance `prev` to `curr`, advance `curr` to the saved next. When `curr` is `null`, `prev` is the new head.
+- **Intuition:** Iterate through the list, unhooking the current node's forward pointer and re-hooking it to point backward. To avoid losing the rest of the list, we must safely store the "next" node before breaking the connection.
+- **Step-by-Step Logic:**
+  1. Initialize `prev = null` and `curr = head`.
+  2. While `curr != null`:
+     - Save the next node: `nextTemp = curr.next`.
+     - Reverse the pointer: `curr.next = prev`.
+     - Slide `prev` forward: `prev = curr`.
+     - Slide `curr` forward: `curr = nextTemp`.
+  3. When `curr` becomes null, `prev` points to the new head. Return `prev`.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$.
 - **Edge Cases:** Empty list (`null`), single node (returns the same node).
 - **This is the most important linked list subroutine** — it's used as a building block in palindrome checking, k-group reversal, and list reordering.
 
 ### `0234` • Palindrome Linked List
 - **What it's really asking:** Is the list a palindrome? Solve it in $\mathcal{O}(1)$ space (no array conversion).
-- **Concept:** Three-step approach: (1) Find the middle using fast/slow pointers, (2) Reverse the second half in-place, (3) Compare the first half with the reversed second half node by node. Optionally, restore the list by reversing the second half again.
+- **Intuition:** A palindrome reads the same forwards and backwards. If we reverse the second half of the list, we can just compare it node-by-node against the first half.
+- **Step-by-Step Logic:**
+  1. Use fast and slow pointers to find the middle of the list. `slow` ends up at the midpoint.
+  2. Reverse the second half of the list starting from `slow`. Keep a reference to the new head of this reversed half.
+  3. Iterate with two pointers: `p1` at the `head` of the original list, and `p2` at the head of the reversed half.
+  4. If their values ever mismatch, return `false`.
+  5. Continue until `p2` is null. Return `true`.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$.
 - **Edge Cases:** Even vs odd length lists (odd-length has a middle node that's ignored), single node, two-node palindrome (`[1,1]`) vs non-palindrome (`[1,2]`).
 
 ### `0876` • Middle of the Linked List
 - **What it's really asking:** Return the middle node. For even-length lists, return the second of the two middle nodes.
-- **Concept:** `fast` moves 2 steps per iteration, `slow` moves 1 step. When `fast` reaches the end (or falls off), `slow` is at the midpoint. This is a direct application of the $2\times$ velocity relationship.
+- **Intuition:** Imagine two cars on a road. One drives at 60mph and the other at 30mph. When the fast car reaches the destination, the slow car is exactly halfway there.
+- **Step-by-Step Logic:**
+  1. Initialize two pointers: `slow = head` and `fast = head`.
+  2. Loop as long as `fast` is not null AND `fast.next` is not null.
+  3. Inside the loop, move `slow` by 1 step (`slow = slow.next`).
+  4. Move `fast` by 2 steps (`fast = fast.next.next`).
+  5. When the loop terminates, `slow` points to the middle node. Return `slow`.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$.
 - **Edge Cases:** Single node (returns itself), two nodes (returns second), odd vs even lengths.
 
