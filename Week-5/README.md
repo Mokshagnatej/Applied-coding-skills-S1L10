@@ -23,7 +23,7 @@
 <br/>
 
 <p align="center">
-  Focuses on binary tree traversals (Inorder, Preorder, Postorder, Vertical), depth-first search paradigms, tree symmetry, and recursive path accumulation.
+  Transitioning from linear structures to <b>hierarchical structures</b>, this module dives deep into Binary Trees. The core engine here is <b>Depth-First Search (DFS)</b> using recursion. You'll master the art of top-down state passing, bottom-up result aggregation, backtracking to collect paths, and structural validation across multiple trees simultaneously.
 </p>
 
 [⬅️ RETURN TO MAIN REPO](../README.md) • [📊 PROBLEM DIRECTORY](#-problem-directory--performance) • [🎯 CORE OBJECTIVES](#-core-learning-objectives) • [💡 PATTERN DEEP DIVE](#-pattern-deep-dive--cheat-sheet) • [🔍 PER-PROBLEM ANALYSIS](#-per-problem-analytical-breakdown)
@@ -36,11 +36,17 @@
 
 ## 🎯 Core Learning Objectives
 
-- **Depth-First Search (DFS):** Navigating complex tree structures using recursion and explicit stacks for Preorder, Inorder, and Postorder traversals.
-- **Tree Symmetry & Equivalence:** Validating structural and value-based equivalence across distinct subtrees.
-- **Path Accumulation:** Top-down recursive state passing to accumulate running sums and collect root-to-leaf paths.
-- **Multi-Dimensional Sorting:** Utilizing custom comparators and Data Structures (Maps of TreeMaps/PriorityQueues) for complex traversals like Vertical Order.
-- **Time/Space Tradeoffs:** Achieving $\mathcal{O}(N)$ traversal times with optimal $\mathcal{O}(H)$ recursive call stack space bounds.
+This week focuses heavily on recursive thinking. The challenge is learning to trust the recursive leap of faith: assuming your function works for subtrees and using those results to solve for the root.
+
+- **Depth-First Search (DFS) Traversal Orders:** Mastering the big three: Preorder (Root-Left-Right), Inorder (Left-Root-Right), and Postorder (Left-Right-Root). Knowing which to use is critical. Preorder is for duplicating trees, Inorder sorts BSTs, and Postorder is used when a node's answer depends entirely on its children (like tree height or deletion).
+
+- **Simultaneous Tree Validation:** Comparing two separate trees (or mirroring subtrees of the same tree) by passing nodes from both into the same recursive function. The base case checks (`null` vs `null`) handle structural differences before value differences are checked.
+
+- **Top-Down State Accumulation:** Passing information *down* the tree via recursive function arguments. For example, passing the running path sum or the current `String` path to child nodes so they know the history of how they were reached.
+
+- **Backtracking Path Collection:** When finding all valid paths from root to leaf, you must manage a single shared `List`. As you traverse down, you add the node. Crucially, as you return up the call stack, you must *remove* that node so it doesn't leak into sibling paths.
+
+- **Multi-Dimensional Coordinate Tracking:** Trees don't exist purely logically; sometimes we care about physical coordinates. Combining DFS with complex Maps (e.g., `TreeMap<Col, TreeMap<Row, PriorityQueue<Val>>>`) to flatten a 2D hierarchical structure into a 1D vertical order based on geometric overlapping rules.
 
 <br/>
 
@@ -67,22 +73,68 @@
 ## 💡 Pattern Deep Dive & Cheat Sheet
 
 ### 1. Depth-First Search (DFS) Traversal Orders
-- **Preorder (Root, Left, Right):** Useful for duplicating trees or prefix expression generation.
-- **Inorder (Left, Root, Right):** Essential for Binary Search Trees (BSTs) to retrieve elements in sorted order.
-- **Postorder (Left, Right, Root):** Optimal for deleting trees or calculating aggregate subtree properties (e.g., height, sum).
+
+The structure of recursive DFS is remarkably consistent. The only difference is where you process the current node relative to the recursive calls.
+
+```java
+public void dfs(TreeNode node) {
+    if (node == null) return;
+    
+    // PREORDER: Process here (Root, Left, Right)
+    
+    dfs(node.left);
+    
+    // INORDER: Process here (Left, Root, Right)
+    
+    dfs(node.right);
+    
+    // POSTORDER: Process here (Left, Right, Root)
+}
+```
+**Complexity:** Time $\mathcal{O}(N)$, Space $\mathcal{O}(H)$ where $H$ is the height of the tree (due to the call stack).
 
 ### 2. Simultaneous Tree Validation (`0100`, `0101`)
-- For comparing two trees, pass both nodes into the recursive function.
-- **Base Case Checks:**
-  - Both `null` $\implies$ valid.
-  - One `null` (but not the other) $\implies$ invalid.
-  - Values differ $\implies$ invalid.
-- For symmetry, validate `left.left` against `right.right` and `left.right` against `right.left`.
+
+**When to use:** Checking if two trees are identical, or if a single tree is symmetric (left subtree is mirror of right subtree).
+
+**The Base Case Trick:** When comparing nodes `p` and `q`, handle the `null` cases first. If both are `null`, they match. If one is `null` and the other isn't, they don't. Only then is it safe to compare `p.val` and `q.val`.
+
+```java
+// For Symmetric Tree (passing left and right children of root)
+private boolean isMirror(TreeNode t1, TreeNode t2) {
+    if (t1 == null && t2 == null) return true;
+    if (t1 == null || t2 == null) return false;
+    
+    // Root values must match, and opposite subtrees must match
+    return (t1.val == t2.val) 
+        && isMirror(t1.left, t2.right) 
+        && isMirror(t1.right, t2.left);
+}
+```
 
 ### 3. Backtracking Path Accumulation (`0113`)
-- When collecting paths from root to leaf, add the current node to the `path` list.
-- If it's a leaf and the sum matches, append a **copy** of the `path` list to the `result`.
-- **Crucial Step:** Remove the current node from the `path` list before returning up the call stack (backtracking).
+
+**When to use:** When you need to collect elements into a single list as you walk down a tree, but you need those elements removed when you walk back up so they don't affect other branches.
+
+```java
+public void backtrack(TreeNode node, int currentSum, List<Integer> path, List<List<Integer>> res) {
+    if (node == null) return;
+    
+    path.add(node.val); // Add current state
+    
+    // Check if leaf node
+    if (node.left == null && node.right == null && currentSum == node.val) {
+        res.add(new ArrayList<>(path)); // MUST add a copy of the path!
+    } else {
+        // Continue exploring
+        backtrack(node.left, currentSum - node.val, path, res);
+        backtrack(node.right, currentSum - node.val, path, res);
+    }
+    
+    path.remove(path.size() - 1); // BACKTRACK: Remove current state before returning
+}
+```
+**Why copy the path?** If you do `res.add(path)`, you add a reference to the same list. By the end of traversal, that list will be empty (due to backtracking), and your result will be a list of empty lists.
 
 <br/>
 
@@ -91,39 +143,60 @@
 ## 🔍 Per-Problem Analytical Breakdown
 
 ### `0094`, `0144`, `0145` • Basic Traversals
-- **Concept:** Standard recursive implementations covering all three primary DFS visitation orders.
-- **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(H)$ where $H$ is tree height (recursive stack).
-- **Edge Cases:** Empty tree, degenerate (skewed) tree where $\mathcal{O}(H)$ approaches $\mathcal{O}(N)$.
+- **What it's really asking:** Traverse the tree in a specific order and return the node values in a list.
+- **Concept:** Standard recursive implementations covering Preorder, Inorder, and Postorder. 
+- **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(H)$ for the recursive call stack (can be $\mathcal{O}(N)$ in the worst case of a skewed tree).
+- **Edge Cases:** Empty tree (`null`), completely skewed tree (linked list equivalent).
 
 ### `0100` • Same Tree
-- **Concept:** Recursive structural and value-based comparison of two independent binary trees.
+- **What it's really asking:** Do these two independent tree roots point to structurally identical trees with identical node values?
+- **Concept:** Recursive simultaneous traversal. Base cases handle structural disparities, recursive calls handle value/subtree comparisons.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(H)$.
-- **Edge Cases:** Trees with same structure but different values, identical values but different structure.
+- **Edge Cases:** Trees with same structure but different values, identical values but different structure (e.g., node 1 with left child 2 vs node 1 with right child 2).
 
 ### `0101` • Symmetric Tree
-- **Concept:** Compare left and right subtrees of a single root acting as mirror images of each other.
+- **What it's really asking:** Is the tree a mirror reflection of itself across the center axis?
+- **Concept:** Compare left and right subtrees of a single root acting as mirror images. `left.left` must match `right.right`, and `left.right` must match `right.left`.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(H)$.
 - **Edge Cases:** Asymmetric tree with identical values but differing node placements.
 
 ### `0112` • Path Sum
-- **Concept:** Top-down recursive subtraction of node values from the `targetSum`. If leaf reached and remaining sum equals leaf value, return true.
+- **What it's really asking:** Does ANY root-to-leaf path exist where the node values sum exactly to `targetSum`?
+- **Concept:** Top-down recursive subtraction. As you visit each node, subtract its value from the `targetSum`. If you hit a leaf and the remaining target equals the leaf's value, you've found a path.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(H)$.
-- **Edge Cases:** Empty tree (returns false even if target is 0), negative values in nodes or target.
+- **Edge Cases:** Empty tree (returns false even if target is 0), negative values in nodes or target (can't prune early just because sum drops below 0).
 
 ### `0113` • Path Sum II
-- **Concept:** Full root-to-leaf path extraction using backtracking to manage the state of the current path list.
-- **Complexity:** Time: $\mathcal{O}(N^2)$ (due to path copying) | Space: $\mathcal{O}(H)$ auxiliary.
+- **What it's really asking:** Find ALL root-to-leaf paths that sum to `targetSum` and return them as lists of values.
+- **Concept:** Path accumulation using backtracking. The key is sharing a single `List<Integer>` across recursive calls, adding nodes on the way down, and removing them on the way up.
+- **Complexity:** Time: $\mathcal{O}(N^2)$ worst case (when tree is a balanced tree full of valid paths, creating copies of length $H$ takes time) | Space: $\mathcal{O}(H)$ auxiliary.
 - **Edge Cases:** Multiple valid paths, no valid paths.
 
 ### `0257` • Binary Tree Paths
-- **Concept:** DFS accumulation of string paths. `StringBuilder` can be used to optimize string concatenations during recursive descents.
-- **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(H)$.
-- **Edge Cases:** Single node tree.
+- **What it's really asking:** Return all root-to-leaf paths as formatted strings like `"1->2->5"`.
+- **Concept:** DFS accumulation of string paths. Instead of a list with backtracking, strings are immutable in Java. Passing `path + node.val + "->"` creates a new string for each branch naturally avoiding the need to backtrack manually.
+- **Complexity:** Time: $\mathcal{O}(N^2)$ (due to string concatenation copying) | Space: $\mathcal{O}(N \log N)$ for string storage in call stack.
+- **Optimization:** For peak performance, use `StringBuilder` and manually backtrack its length.
+- **Edge Cases:** Single node tree (no arrows).
 
 ### `0987` • Vertical Order Traversal of a Binary Tree
-- **Concept:** Advanced traversal tracking explicit `(row, col)` coordinates. Utilizes a nested map structure like `TreeMap<Integer, TreeMap<Integer, PriorityQueue<Integer>>>` to automatically sort columns left-to-right, rows top-to-bottom, and values smallest-to-largest when coordinates tie.
-- **Complexity:** Time: $\mathcal{O}(N \log N)$ (due to sorting/tree operations) | Space: $\mathcal{O}(N)$.
-- **Edge Cases:** Nodes overlapping at identical coordinates (handled via PriorityQueue value sorting).
+- **What it's really asking:** Group nodes by vertical column (from left to right). Within a column, order them from top to bottom. If nodes overlap at the exact same row/col, sort them by value.
+- **Concept:** Combine DFS with geometric coordinates `(row, col)`. Root is `(0, 0)`, left child is `(row + 1, col - 1)`, right child is `(row + 1, col + 1)`. Use a nested map structure: `TreeMap<Integer, TreeMap<Integer, PriorityQueue<Integer>>>` to automatically sort columns (outer key), rows (inner key), and overlapping values (PriorityQueue).
+- **Complexity:** Time: $\mathcal{O}(N \log N)$ (due to map/heap sorting) | Space: $\mathcal{O}(N)$.
+- **Edge Cases:** Overlapping nodes (handled properly by the PriorityQueue).
+
+<br/>
+
+---
+
+## 🔗 Connections to Other Weeks
+
+| This Week's Pattern | Where It Reappears |
+|:---|:---|
+| Recursion & Backtracking | → Backtracking through Graphs (Week 7, Week 8) |
+| DFS | → Graph DFS (Week 7) |
+| Inorder Traversal | → Binary Search Trees (Week 6) |
+| Postorder Traversal | → Evaluating ASTs, tree deletion |
 
 <br/>
 
@@ -131,6 +204,6 @@
 
 <div align="center">
 
-[⬅️ Back to Main Repository](../README.md)
+[⬅️ Week 4 — Queues & Deques](../Week-4/) • [⬅️ Back to Main Repository](../README.md) • [➡️ Week 6 — BSTs & Heaps](../Week-6/)
 
 </div>

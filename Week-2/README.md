@@ -23,7 +23,7 @@
 <br/>
 
 <p align="center">
-  Focuses on linked list pointer dynamics, cycle detection algorithms, in-place segment reversals, list intersections, and priority-queue powered k-way merging.
+  This module shifts from contiguous memory (arrays) to <b>non-contiguous, pointer-based structures</b>. Linked lists force you to think about memory indirection, in-place rewiring of pointers, and elegant two-pointer algorithms that work without random access. These skills are critical for understanding trees, graphs, and OS-level data structures.
 </p>
 
 [⬅️ RETURN TO MAIN REPO](../README.md) • [📊 PROBLEM DIRECTORY](#-problem-directory--performance) • [🎯 CORE OBJECTIVES](#-core-learning-objectives) • [💡 PATTERN DEEP DIVE](#-pattern-deep-dive--cheat-sheet) • [🔍 PER-PROBLEM ANALYSIS](#-per-problem-analytical-breakdown)
@@ -36,11 +36,17 @@
 
 ## 🎯 Core Learning Objectives
 
-- **Fast & Slow Pointers (Floyd's Algorithm):** Locating linked list midpoints and identifying cycle entrance nodes in $\mathcal{O}(1)$ space.
-- **In-Place Pointer Reversal:** Reversing sublists and full lists by manipulating `.next` references without auxiliary structures.
-- **K-Group Segmented Reversal:** Maintaining segment boundaries and reconnecting head/tail references dynamically.
-- **Priority Queue / Divide-and-Conquer:** Merging $K$ sorted lists efficiently in $\mathcal{O}(N \log K)$ time.
-- **Two-Pointer Equalization:** Aligning traverse lengths of different lists by switching heads at the end of each pass.
+This week introduces the fundamental patterns for manipulating linked list nodes — all achievable in $\mathcal{O}(1)$ auxiliary space:
+
+- **Fast & Slow Pointers (Floyd's Algorithm):** A technique where two pointers traverse the list at different speeds (1 step vs 2 steps). This elegantly solves two seemingly different problems: finding the middle node (when `fast` reaches the end, `slow` is at the midpoint) and detecting cycles (if `slow` and `fast` ever meet, a cycle exists). The mathematical proof behind cycle entrance detection is one of the most beautiful results in CS.
+
+- **In-Place Pointer Reversal:** Reversing a linked list without extra memory by reassigning `.next` pointers as you traverse. This requires carefully juggling three references (`prev`, `curr`, `nextTemp`) to avoid losing nodes. Mastering this unlocks palindrome checking, segment reversal, and list reordering.
+
+- **K-Group Segmented Reversal:** An advanced extension where you reverse segments of $k$ consecutive nodes while maintaining correct boundary connections between segments. The challenge lies in bookkeeping: tracking each segment's new head and tail, and connecting them to adjacent segments.
+
+- **Priority Queue / Divide-and-Conquer Merge:** Merging $K$ sorted lists efficiently using a min-heap. Instead of merging lists pairwise ($\mathcal{O}(NK)$), a priority queue of size $K$ always gives you the globally smallest node in $\mathcal{O}(\log K)$ time, achieving $\mathcal{O}(N \log K)$ total.
+
+- **Two-Pointer Length Equalization:** When two lists might intersect, the challenge is their different lengths. By switching each pointer to the other list's head upon reaching `null`, both pointers travel exactly `len(A) + len(B)` steps and converge at the intersection (or both reach `null`).
 
 <br/>
 
@@ -65,50 +71,61 @@
 
 ## 💡 Pattern Deep Dive & Cheat Sheet
 
-### 1. Floyd's Cycle Detection & Mathematical Proof
-- **Phase 1 (Meeting Point):** `slow` advances 1 step, `fast` advances 2 steps.
-  - If they meet, a cycle exists.
-  - Let distance from head to cycle entrance = $a$, entrance to meeting point = $b$, meeting point back to entrance = $c$.
-  - Distance traveled by `slow` = $a + b$.
-  - Distance traveled by `fast` = $a + b + n(b + c)$.
-  - Since `fast` is twice as fast: $2(a + b) = a + b + n(b + c) \implies a = (n - 1)(b + c) + c$.
-- **Phase 2 (Cycle Entrance):** Reset `slow` to `head`. Move both `slow` and `fast` 1 step at a time. They will meet exactly at the cycle entrance after $a$ steps!
+### 1. Floyd's Cycle Detection — The Mathematical Proof
+
+**When to use:** Detecting if a linked list has a cycle, and finding the exact node where the cycle begins.
+
+**Phase 1 — Meeting Point (Cycle Detection):**
+- `slow` advances 1 step, `fast` advances 2 steps. If they meet, a cycle exists.
+- Let: $a$ = distance from head to cycle entrance, $b$ = entrance to meeting point, $c$ = meeting point back to entrance.
+- Distance: `slow` traveled $a + b$. `fast` traveled $a + b + n(b + c)$ (looped $n$ times around the cycle).
+- Since `fast` moves at $2\times$ speed: $2(a + b) = a + b + n(b + c) \implies a = (n - 1)(b + c) + c$.
+
+**Phase 2 — Finding the Entrance:**
+- Reset one pointer to `head`. Move both pointers 1 step at a time.
+- They'll meet at the cycle entrance after exactly $a$ steps. **This is because $a \equiv c \pmod{b + c}$!**
 
 ```java
 ListNode slow = head, fast = head;
 while (fast != null && fast.next != null) {
     slow = slow.next;
     fast = fast.next.next;
-    if (slow == fast) {
+    if (slow == fast) {        // Phase 1: cycle detected
         ListNode ptr = head;
-        while (ptr != slow) {
+        while (ptr != slow) {  // Phase 2: find entrance
             ptr = ptr.next;
             slow = slow.next;
         }
-        return ptr;
+        return ptr;  // Cycle entrance node
     }
 }
-return null;
+return null;  // No cycle
 ```
 
-### 2. In-Place Directional Pointer Reversal
-- Invert `.next` pointers iteratively using `prev`, `curr`, and `nextTemp`.
+### 2. In-Place Pointer Reversal — The 3-Variable Dance
+
+**When to use:** Reversing a full list or a sublist without extra memory.
+
+**Mental model:** Imagine a chain of paper clips — you're unhooking each clip from the next one and hooking it to the previous one, working left to right.
 
 ```java
 ListNode prev = null, curr = head;
 while (curr != null) {
-    ListNode nextTemp = curr.next;
-    curr.next = prev;
-    prev = curr;
-    curr = nextTemp;
+    ListNode nextTemp = curr.next;  // Save the next node (or we lose it!)
+    curr.next = prev;               // Reverse the pointer
+    prev = curr;                    // Advance prev
+    curr = nextTemp;                // Advance curr
 }
-return prev;
+return prev;  // prev is now the new head
 ```
 
-### 3. Cross-List Pointer Length Equalization (`0160`)
-- When pointer $A$ reaches the end of list $A$, redirect it to the head of list $B$.
-- When pointer $B$ reaches the end of list $B$, redirect it to the head of list $A$.
-- Both pointers travel exactly $\text{length}(A) + \text{length}(B)$ steps and collide either at the intersection node or at `null`.
+**Why `nextTemp` is essential:** Without saving `curr.next` before overwriting it, we'd sever the link to the rest of the list and lose all remaining nodes.
+
+### 3. Cross-List Pointer Equalization (`0160`)
+
+**When to use:** Finding the intersection node of two linked lists that may have different lengths.
+
+**The elegant trick:** When pointer A finishes list A, redirect it to the head of list B. When pointer B finishes list B, redirect it to the head of list A. After at most one switch each, both pointers have traveled $\text{len}(A) + \text{len}(B)$ steps total and will either meet at the intersection or both reach `null`.
 
 ```java
 ListNode pA = headA, pB = headB;
@@ -116,8 +133,10 @@ while (pA != pB) {
     pA = (pA == null) ? headB : pA.next;
     pB = (pB == null) ? headA : pB.next;
 }
-return pA;
+return pA;  // Intersection node, or null if no intersection
 ```
+
+**Why it works:** The length difference is absorbed by the cross-traversal. If list A has length 5 and list B has length 8, pointer A travels 5 + 8 = 13 steps and pointer B travels 8 + 5 = 13 steps. They're synchronized!
 
 <br/>
 
@@ -126,44 +145,68 @@ return pA;
 ## 🔍 Per-Problem Analytical Breakdown
 
 ### `0021` • Merge Two Sorted Lists
-- **Concept:** Iterative dummy head splice merge. Compare heads of both lists and advance the pointer with the smaller value.
-- **Complexity:** Time: $\mathcal{O}(N + M)$ | Space: $\mathcal{O}(1)$.
-- **Edge Cases:** One or both lists empty, lists of disparate lengths.
+- **What it's really asking:** Interleave two sorted lists into one sorted list, using only pointer manipulation (no new nodes).
+- **Concept:** Create a dummy sentinel node as the merge head. Compare the current heads of both lists, attach the smaller one to the merged tail, and advance that list's pointer. When one list is exhausted, attach the remainder of the other.
+- **Complexity:** Time: $\mathcal{O}(N + M)$ | Space: $\mathcal{O}(1)$ — only pointer rewiring, no new node allocation.
+- **Edge Cases:** One or both lists empty, lists of very different lengths (1 vs 10000), all elements of one list smaller than all elements of the other.
+- **Foundation for:** This is the building block of merge sort and the k-way merge in problem `0023`.
 
 ### `0023` • Merge k Sorted Lists
-- **Concept:** Min-Heap (PriorityQueue) of size $k$. Extract smallest node, append to merged list, and offer its `.next` into the heap.
-- **Complexity:** Time: $\mathcal{O}(N \log k)$ where $N$ is total nodes | Space: $\mathcal{O}(k)$ auxiliary heap.
-- **Edge Cases:** $k = 0$, array of empty lists (`[[], []]`), single list.
+- **What it's really asking:** Merge $K$ individually sorted linked lists into one globally sorted list, efficiently.
+- **Concept:** Use a min-heap (`PriorityQueue`) of size $K$, initially containing the head node of each list. Extract the minimum, append it to the result, and push its `.next` (if it exists) back into the heap. The heap always holds at most $K$ elements, so each extraction/insertion is $\mathcal{O}(\log K)$.
+- **Complexity:** Time: $\mathcal{O}(N \log K)$ where $N$ is the total number of nodes across all lists | Space: $\mathcal{O}(K)$ for the heap.
+- **Edge Cases:** $K = 0$, array contains empty lists (`[[], []]`), single list in the array.
+- **Alternative:** Divide-and-conquer pairwise merging also achieves $\mathcal{O}(N \log K)$ but is harder to implement correctly.
 
 ### `0025` • Reverse Nodes in k-Group
-- **Concept:** Count $k$ nodes ahead. If available, reverse that group and link the tail to the recursively/iteratively processed remaining list.
-- **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$ auxiliary space.
-- **Edge Cases:** List length less than $k$, list length not a multiple of $k$ (remaining nodes stay unmodified).
+- **What it's really asking:** Reverse every consecutive group of $K$ nodes. If the remaining nodes are fewer than $K$, leave them as-is.
+- **Concept:** First, count whether $K$ nodes are available ahead. If yes, reverse that segment using the standard reversal technique, then recursively/iteratively process the rest. The tricky part is reconnecting: the tail of the reversed segment must point to the head of the next processed segment.
+- **Complexity:** Time: $\mathcal{O}(N)$ — each node is visited twice (once to count, once to reverse) | Space: $\mathcal{O}(1)$ iterative.
+- **Edge Cases:** List length $< K$ (no reversal), length not a multiple of $K$ (last incomplete group stays unchanged), $K = 1$ (identity operation).
 
 ### `0142` • Linked List Cycle II
-- **Concept:** Floyd's Tortoise and Hare algorithm with two-phase entrance calculation.
-- **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$.
-- **Edge Cases:** No cycle present, cycle comprises the entire list, single node pointing to itself.
+- **What it's really asking:** If a cycle exists, return the node where the cycle begins. If no cycle, return `null`.
+- **Concept:** Floyd's Tortoise and Hare with the two-phase entrance detection (see Pattern Deep Dive above). The mathematical proof guarantees that after the meeting point, resetting one pointer to head and advancing both at speed 1 will produce a collision at the exact cycle entrance.
+- **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$ — no hash set needed!
+- **Edge Cases:** No cycle, cycle comprises the entire list (tail points to head), single node pointing to itself, two-node cycle.
 
 ### `0160` • Intersection of Two Linked Lists
-- **Concept:** Two-pointer traversal swapping heads upon reaching the end, naturally neutralizing length differences.
+- **What it's really asking:** Two singly-linked lists may converge into a shared suffix. Find the node where they first merge, or return `null`.
+- **Concept:** The cross-traversal trick (see Pattern Deep Dive) naturally equalizes path lengths without needing to compute list lengths explicitly.
 - **Complexity:** Time: $\mathcal{O}(N + M)$ | Space: $\mathcal{O}(1)$.
-- **Edge Cases:** No intersection, intersection at the very first node, disparate list lengths ($10^5$ vs $1$).
+- **Edge Cases:** No intersection, intersection at the very first node, one list is much longer than the other.
 
 ### `0206` • Reverse Linked List
-- **Concept:** 3-pointer slide (`prev`, `curr`, `next`) reassigning pointers in a single pass.
+- **What it's really asking:** Reverse the direction of all pointers in a singly linked list.
+- **Concept:** The foundational 3-pointer slide: `prev`, `curr`, `nextTemp`. At each step: save `curr.next`, point `curr.next` to `prev`, advance `prev` to `curr`, advance `curr` to the saved next. When `curr` is `null`, `prev` is the new head.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$.
-- **Edge Cases:** Empty list (`null`), single node list.
+- **Edge Cases:** Empty list (`null`), single node (returns the same node).
+- **This is the most important linked list subroutine** — it's used as a building block in palindrome checking, k-group reversal, and list reordering.
 
 ### `0234` • Palindrome Linked List
-- **Concept:** Find middle using slow/fast pointers, reverse the second half in-place, compare the two halves, and optionally restore the list.
+- **What it's really asking:** Is the list a palindrome? Solve it in $\mathcal{O}(1)$ space (no array conversion).
+- **Concept:** Three-step approach: (1) Find the middle using fast/slow pointers, (2) Reverse the second half in-place, (3) Compare the first half with the reversed second half node by node. Optionally, restore the list by reversing the second half again.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$.
-- **Edge Cases:** Even vs odd length lists, single node list, two-node palindrome vs non-palindrome.
+- **Edge Cases:** Even vs odd length lists (odd-length has a middle node that's ignored), single node, two-node palindrome (`[1,1]`) vs non-palindrome (`[1,2]`).
 
 ### `0876` • Middle of the Linked List
-- **Concept:** Fast pointer moves 2 steps while slow moves 1 step. When fast reaches end, slow sits at the middle node (second middle for even lists).
+- **What it's really asking:** Return the middle node. For even-length lists, return the second of the two middle nodes.
+- **Concept:** `fast` moves 2 steps per iteration, `slow` moves 1 step. When `fast` reaches the end (or falls off), `slow` is at the midpoint. This is a direct application of the $2\times$ velocity relationship.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$.
-- **Edge Cases:** Single node, two nodes (returns second node), odd vs even length.
+- **Edge Cases:** Single node (returns itself), two nodes (returns second), odd vs even lengths.
+
+<br/>
+
+---
+
+## 🔗 Connections to Other Weeks
+
+| This Week's Pattern | Where It Reappears |
+|:---|:---|
+| Fast/Slow pointers | → Tree midpoint finding (Week 5), cycle detection in number theory (Week 8 — Happy Number) |
+| In-place reversal | → Stack simulation (Week 3), tree path reversal |
+| Merge technique | → Priority queue k-way merge extends to k-sorted-streams, merge-sort-based counting |
+| Pointer manipulation | → Tree node rewiring (Week 5), graph adjacency list construction (Week 7) |
 
 <br/>
 
@@ -171,6 +214,6 @@ return pA;
 
 <div align="center">
 
-[⬅️ Back to Main Repository](../README.md)
+[⬅️ Week 1 — Arrays](../Week-1/) • [⬅️ Back to Main Repository](../README.md) • [➡️ Week 3 — Stacks](../Week-3/)
 
 </div>

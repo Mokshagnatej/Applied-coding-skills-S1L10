@@ -22,7 +22,7 @@
 <br/>
 
 <p align="center">
-  Focuses on foundational array manipulations, in-place pointer traversals, sliding window frequency tracking, prefix sums, and logarithmic search paradigms.
+  This module builds the algorithmic foundation every developer needs — working with contiguous memory, manipulating elements in-place, and searching sorted data efficiently. These patterns appear in <b>over 40% of all coding interviews</b>.
 </p>
 
 [⬅️ RETURN TO MAIN REPO](../README.md) • [📊 PROBLEM DIRECTORY](#-problem-directory--performance) • [🎯 CORE OBJECTIVES](#-core-learning-objectives) • [💡 PATTERN DEEP DIVE](#-pattern-deep-dive--cheat-sheet) • [🔍 PER-PROBLEM ANALYSIS](#-per-problem-analytical-breakdown)
@@ -35,11 +35,17 @@
 
 ## 🎯 Core Learning Objectives
 
-- **Two-Pointer Convergence:** Opposite-end convergence, in-place element swapping, and sliding window boundaries without auxiliary heap allocations.
-- **Partitioning Algorithms:** Dutch National Flag 3-way partitioning in $\mathcal{O}(N)$ time and $\mathcal{O}(1)$ space.
-- **Prefix / Suffix Accumulators:** Precomputing cumulative sums for $\mathcal{O}(1)$ range queries and difference balances.
-- **Binary Search:** Logarithmic search on sorted collections with exact boundary condition invariants (`mid = low + (high - low) / 2`).
-- **Direct Hash Addressing:** Replacing heavy hash tables with fixed-size `int[26]` frequency arrays for constant-time lookup.
+This week introduces five fundamental paradigms that unlock the vast majority of array and string problems:
+
+- **Two-Pointer Convergence:** Instead of brute-forcing with nested loops ($\mathcal{O}(N^2)$), we place two pointers at strategic positions (start/end, or fast/slow) and move them inward based on conditions. This collapses two-dimensional search spaces into linear time. Used in problems like reversing strings, partitioning arrays, and merging sorted data.
+
+- **Partitioning Algorithms (Dutch National Flag):** Dijkstra's 3-way partitioning divides an array into three regions in a single pass using three pointers (`low`, `mid`, `high`). The key insight is maintaining clear invariant boundaries — everything before `low` is sorted, everything after `high` is sorted, and the `[mid, high]` region is still being processed.
+
+- **Prefix / Suffix Accumulators:** By precomputing running totals (prefix sums), we can answer range-sum queries in $\mathcal{O}(1)$ instead of $\mathcal{O}(N)$. This technique transforms quadratic pairwise comparisons into linear-time mathematical formulas — essential for problems involving cumulative differences or subarray sums.
+
+- **Binary Search:** The cornerstone of logarithmic-time algorithms. On any sorted or monotonic data, binary search eliminates half the search space per iteration, achieving $\mathcal{O}(\log N)$ time. The critical implementation detail is using `mid = low + (high - low) / 2` instead of `(low + high) / 2` to prevent 32-bit integer overflow.
+
+- **Direct Hash Addressing:** When the key space is small and bounded (e.g., lowercase English letters = 26 values), a fixed-size `int[26]` array outperforms a `HashMap` by eliminating hashing overhead, auto-boxing, and collision handling.
 
 <br/>
 
@@ -67,8 +73,13 @@
 ## 💡 Pattern Deep Dive & Cheat Sheet
 
 ### 1. Dutch National Flag (3-Way Partitioning)
-- **Invariant:** `[0, low - 1]` contains `0`s, `[low, mid - 1]` contains `1`s, `[high + 1, n - 1]` contains `2`s. The unsorted region is `[mid, high]`.
-- **Key Insight:** When swapping with `high`, do **not** increment `mid` because the incoming element from index `high` has not yet been processed.
+
+**When to use:** Any time you need to partition an array into exactly 2 or 3 groups in a single pass (e.g., sort colors, separate negatives/zeros/positives, partition around a pivot).
+
+**How it works:**
+- Three pointers divide the array into four regions: `[0, low-1]` = group A, `[low, mid-1]` = group B, `[mid, high]` = unprocessed, `[high+1, n-1]` = group C.
+- `mid` scans left to right. Depending on the value at `mid`, swap it to the appropriate region.
+- **Critical insight:** When swapping with `high`, do **not** increment `mid` — the incoming element from the right hasn't been examined yet.
 
 ```java
 int low = 0, mid = 0, high = nums.length - 1;
@@ -79,9 +90,15 @@ while (mid <= high) {
 }
 ```
 
+**Why this matters:** Without this pattern, you'd need to sort the array ($\mathcal{O}(N \log N)$) or make multiple passes. The Dutch National Flag achieves $\mathcal{O}(N)$ time in a single pass with $\mathcal{O}(1)$ space.
+
 ### 2. Opposite-End Convergent Two Pointers
-- Used when comparing extremes of a sorted or symmetric array (e.g. `0344` String Reversal, `0977` Squares of Sorted Array).
-- For squared sorting: Since input is sorted, largest squares exist at either the far left (negative) or far right (positive). Fill output array backwards from index $N-1$ to $0$.
+
+**When to use:** Problems involving sorted arrays where you need to compare or combine elements from both ends (reversal, merging sorted halves, finding pairs that sum to a target).
+
+**How it works for Squares of a Sorted Array (`0977`):**
+- A sorted array with negatives has the largest squared values at the extremes (far left or far right).
+- Place two pointers at both ends, compare absolute magnitudes, and fill the output array **backwards** from index $N-1$ to $0$.
 
 ```java
 int left = 0, right = nums.length - 1, idx = nums.length - 1;
@@ -99,10 +116,35 @@ while (left <= right) {
 }
 ```
 
+**Real-world analogy:** Think of two runners starting from opposite ends of a track — they each contribute their best, and we record results from largest to smallest.
+
 ### 3. Prefix & Suffix Mathematical Balancing
-- For an array sorted in non-decreasing order, the sum of absolute differences for element $i$ is:
-$$\text{res}[i] = (i \cdot \text{nums}[i] - \text{leftSum}) + (\text{rightSum} - (n - 1 - i) \cdot \text{nums}[i])$$
-- Allows calculating all differences in $\mathcal{O}(N)$ without quadratic pairwise comparisons.
+
+**When to use:** Any problem where you need to compute a value for each element that depends on all other elements in the array (sum of differences, product except self, contribution calculations).
+
+**How it works for Sum of Absolute Differences (`1685`):**
+- For a sorted array, the sum of absolute differences for element $i$ can be decomposed into a left contribution and a right contribution:
+$$\text{res}[i] = \underbrace{(i \cdot \text{nums}[i] - \text{leftSum})}_{\text{elements before } i \text{ are all smaller}} + \underbrace{(\text{rightSum} - (n - 1 - i) \cdot \text{nums}[i])}_{\text{elements after } i \text{ are all larger}}$$
+- This transforms $\mathcal{O}(N^2)$ pairwise comparisons into $\mathcal{O}(N)$ using running prefix/suffix sums.
+
+**Why this matters:** This mathematical decomposition pattern is reusable across dozens of problems — anytime a brute-force nested loop computes a symmetric function over all pairs.
+
+### 4. Binary Search — The Exact Boundary Template
+
+**When to use:** Any monotonic search space — sorted arrays, answer-space binary search, peak finding.
+
+```java
+int low = 0, high = nums.length - 1;
+while (low <= high) {
+    int mid = low + (high - low) / 2;  // Overflow-safe midpoint
+    if (nums[mid] == target) return mid;
+    else if (nums[mid] < target) low = mid + 1;
+    else high = mid - 1;
+}
+return -1;  // Target not found
+```
+
+**Common pitfall:** Using `(low + high) / 2` causes integer overflow when `low + high > 2^31 - 1`. Always use `low + (high - low) / 2`.
 
 <br/>
 
@@ -111,54 +153,81 @@ $$\text{res}[i] = (i \cdot \text{nums}[i] - \text{leftSum}) + (\text{rightSum} -
 ## 🔍 Per-Problem Analytical Breakdown
 
 ### `0075` • Sort Colors
-- **Concept:** Three-way partitioning in a single pass.
+- **What it's really asking:** Partition the array into three groups (0s, 1s, 2s) in-place, in a single pass.
+- **Concept:** Dijkstra's three-way partitioning — three pointers maintain invariant boundaries as `mid` scans left to right.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$ in-place.
-- **Edge Cases:** Array with all identical elements (`[2,2,2]`), already sorted arrays (`[0,1,2]`), two-element arrays.
+- **Edge Cases:** All identical elements (`[2,2,2]`), already sorted (`[0,1,2]`), two-element arrays, empty array.
+- **Interview Tip:** If asked "can you do better than sort?", this is the answer — single-pass $\mathcal{O}(N)$ partitioning.
 
 ### `0121` • Best Time to Buy and Sell Stock
-- **Concept:** Keep running track of the global minimum price seen so far. At each step, potential profit is `current_price - min_price`.
+- **What it's really asking:** Find the maximum difference `prices[j] - prices[i]` where `j > i` (you must buy before you sell).
+- **Concept:** Greedy single-pass: maintain a running minimum price seen so far. At each step, the potential profit is `current_price - min_price_so_far`. Track the maximum of all such profits.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$.
-- **Edge Cases:** Strictly decreasing prices (`[7,6,4,3,1]` $\implies 0$), single-day array.
+- **Edge Cases:** Strictly decreasing prices (`[7,6,4,3,1]` → profit is `0`), single-day array, all prices identical.
+- **Why greedy works:** You always want to buy at the cheapest past price — there's no benefit to tracking anything other than the global minimum.
 
 ### `0219` • Contains Duplicate II
-- **Concept:** Sliding window of size $k$ using a `HashSet` or a `HashMap<Integer, Integer>` storing the latest index of each number.
+- **What it's really asking:** Are there two indices `i` and `j` such that `nums[i] == nums[j]` and `|i - j| <= k`?
+- **Concept:** Sliding window of size $k$ using a `HashSet`. As the window slides right, add the new element and remove the element that just fell out of the window. If the element being added is already in the set, we found our duplicate within distance $k$.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(\min(N, k))$.
-- **Edge Cases:** $k \ge N$, duplicate values situated further apart than $k$.
+- **Edge Cases:** $k \ge N$ (entire array is the window), duplicates separated by more than $k$, $k = 0$.
 
 ### `0283` • Move Zeroes
-- **Concept:** Fast-slow pointer: `slow` tracks the position for the next non-zero element, `fast` scans the array.
+- **What it's really asking:** Move all zeroes to the end while preserving the relative order of non-zero elements, in-place.
+- **Concept:** Fast-slow pointer technique. `slow` marks the insertion position for the next non-zero element. `fast` scans ahead looking for non-zeroes. When `fast` finds one, swap it into position `slow` and advance both. This naturally pushes all zeroes to the end.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$ in-place.
-- **Edge Cases:** No zeroes in array, all zeroes, zeroes already at the back.
+- **Edge Cases:** No zeroes, all zeroes, zeroes already at the back, single element.
 
 ### `0344` • Reverse String
-- **Concept:** Two pointers initialized at `0` and `N - 1`, swapping characters and moving inward until they cross.
+- **What it's really asking:** Reverse a character array in-place using $\mathcal{O}(1)$ extra memory.
+- **Concept:** Classic two-pointer convergence — pointers at positions `0` and `N-1` swap characters and move inward until they meet or cross.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$.
-- **Edge Cases:** Single character string, even vs odd length strings.
+- **Edge Cases:** Single character (no-op), even vs odd length strings (both work identically because the middle character of an odd-length string stays in place).
 
 ### `0387` • First Unique Character in a String
-- **Concept:** Two-pass direct hash frequency table using `int[26]`. First pass counts frequencies; second pass finds the first character with count `1`.
-- **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$ (fixed 26-character alphabet).
-- **Edge Cases:** No unique characters (all duplicates), unique character is at index 0 or $N-1$.
+- **What it's really asking:** Find the index of the first character that appears exactly once.
+- **Concept:** Two-pass approach with a direct-addressed frequency table `int[26]`. Pass 1 counts character frequencies. Pass 2 scans left-to-right and returns the first index with count `1`. Using `int[26]` instead of `HashMap` avoids auto-boxing overhead and is cache-friendly.
+- **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$ (fixed 26-character alphabet = constant space).
+- **Edge Cases:** No unique characters, unique character at index 0 or $N-1$, single character string.
 
 ### `0704` • Binary Search
-- **Concept:** Classical divide-and-conquer on sorted ranges using invariant `mid = low + (high - low) / 2` to prevent 32-bit integer overflow.
+- **What it's really asking:** Find the index of a target value in a sorted array, or return -1.
+- **Concept:** Classical divide-and-conquer on sorted ranges. Each comparison eliminates half the remaining candidates. The key implementation detail is the overflow-safe midpoint calculation.
 - **Complexity:** Time: $\mathcal{O}(\log N)$ | Space: $\mathcal{O}(1)$.
-- **Edge Cases:** Target is smaller than minimum or larger than maximum, target not present, single element array.
+- **Edge Cases:** Target smaller than minimum, larger than maximum, not present, single element array, array of length 1 where element equals target.
 
 ### `0977` • Squares of a Sorted Array
-- **Concept:** Two pointers converging inward from the outer boundaries, placing the larger squared value at the current tail index of the result array.
+- **What it's really asking:** Square every element and return the result in sorted order, in $\mathcal{O}(N)$ time.
+- **Concept:** In a sorted array with negatives, the largest squares live at the extremes. Two pointers compare absolute magnitudes from both ends, placing the larger squared value at the current tail of the result array. This avoids an $\mathcal{O}(N \log N)$ post-sort.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(N)$ for output.
-- **Edge Cases:** All negative numbers, all positive numbers, mixed negative/positive with zero.
+- **Edge Cases:** All negative, all positive, mixed with zero, single element.
 
 ### `1480` • Running Sum of 1d Array
-- **Concept:** Prefix sum recurrence: `nums[i] = nums[i] + nums[i - 1]`.
+- **What it's really asking:** Compute the prefix sum array where `result[i] = sum(nums[0..i])`.
+- **Concept:** Simplest prefix sum: `nums[i] += nums[i - 1]` in-place. This builds the running total incrementally — each element becomes the sum of itself and everything before it.
 - **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$ in-place.
-- **Edge Cases:** Single element array, large values subject to overflow (use long if required by constraints).
+- **Edge Cases:** Single element, large values close to integer overflow (use `long` if needed).
 
 ### `1685` • Sum of Absolute Differences in a Sorted Array
-- **Concept:** Prefix and total sum caching to decompose absolute differences into left and right sub-formulas.
-- **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$ auxiliary space.
-- **Edge Cases:** All identical elements, two-element array.
+- **What it's really asking:** For each element, compute the sum of `|nums[i] - nums[j]|` for all `j ≠ i`. The array is sorted.
+- **Concept:** Since the array is sorted, we can decompose each element's contribution using prefix and total sums. Elements to the left are all smaller (no absolute value needed — just `i * nums[i] - leftSum`), and elements to the right are all larger (`rightSum - (n-1-i) * nums[i]`). This mathematical insight transforms $\mathcal{O}(N^2)$ brute force into $\mathcal{O}(N)$.
+- **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(1)$ auxiliary.
+- **Edge Cases:** All identical elements (all results are 0), two-element array.
+
+<br/>
+
+---
+
+## 🔗 Connections to Future Weeks
+
+The patterns in this module form the building blocks for everything that follows:
+
+| This Week's Pattern | Future Application |
+|:---|:---|
+| Two Pointers | → Linked list fast/slow (Week 2), sliding window deques (Week 4) |
+| Prefix Sum | → BFS distance matrices (Week 8), subarray problems |
+| Binary Search | → BST ordered lookup (Week 6), answer-space search |
+| Frequency Arrays | → Monotonic stack maps (Week 3), heap frequency counting (Week 6) |
 
 <br/>
 
@@ -166,6 +235,6 @@ $$\text{res}[i] = (i \cdot \text{nums}[i] - \text{leftSum}) + (\text{rightSum} -
 
 <div align="center">
 
-[⬅️ Back to Main Repository](../README.md)
+[⬅️ Back to Main Repository](../README.md) • [➡️ Next: Week 2 — Linked Lists](../Week-2/)
 
 </div>
