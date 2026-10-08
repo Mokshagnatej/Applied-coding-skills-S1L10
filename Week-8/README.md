@@ -14,9 +14,9 @@
 
 <br/>
 
-[![Solved Status](https://img.shields.io/badge/MODULE_STATUS-5%2F5_SOLVED-00f5d4?style=for-the-badge&logo=target&logoColor=000&labelColor=0d1117)](https://leetcode.com/)
-[![Easy](https://img.shields.io/badge/🟢_EASY-1-10b981?style=for-the-badge&labelColor=0d1117)](https://leetcode.com/)
-[![Medium](https://img.shields.io/badge/🟡_MEDIUM-3-f59e0b?style=for-the-badge&labelColor=0d1117)](https://leetcode.com/)
+[![Solved Status](https://img.shields.io/badge/MODULE_STATUS-9%2F9_SOLVED-00f5d4?style=for-the-badge&logo=target&logoColor=000&labelColor=0d1117)](https://leetcode.com/)
+[![Easy](https://img.shields.io/badge/🟢_EASY-3-10b981?style=for-the-badge&labelColor=0d1117)](https://leetcode.com/)
+[![Medium](https://img.shields.io/badge/🟡_MEDIUM-5-f59e0b?style=for-the-badge&labelColor=0d1117)](https://leetcode.com/)
 [![Hard](https://img.shields.io/badge/🔴_HARD-1-ef4444?style=for-the-badge&labelColor=0d1117)](https://leetcode.com/)
 [![Language](https://img.shields.io/badge/RUNTIME-JAVA_21+-f78166?style=for-the-badge&logo=openjdk&logoColor=fff&labelColor=0d1117)](https://www.java.com/)
 
@@ -54,9 +54,13 @@ This week elevates graph theory by introducing advanced structures and state-tra
 
 | # | Problem Title | Tier | Key Pattern / Concept | Time | Space | Performance (Beats) | Solution | Notes |
 | :---: | :--- | :---: | :--- | :---: | :---: | :---: | :---: | :---: |
+| `0049` | [Group Anagrams](https://leetcode.com/problems/group-anagrams/) | ![Medium](https://img.shields.io/badge/🟡_Medium-f59e0b?style=flat-square&labelColor=0d1117) | Hash Map with Sorted String Key | $\mathcal{O}(N \times K \log K)$ | $\mathcal{O}(NK)$ | `⚡ 6 ms (98.97%)` | [solution.java](0049-group-anagrams/solution.java) | [README.md](0049-group-anagrams/README.md) |
+| `0200` | [Number of Islands](https://leetcode.com/problems/number-of-islands/) | ![Medium](https://img.shields.io/badge/🟡_Medium-f59e0b?style=flat-square&labelColor=0d1117) | Grid DFS / BFS Components | $\mathcal{O}(R \times C)$ | $\mathcal{O}(R \times C)$ | `4 ms (46.55%)` | [solution.java](0200-number-of-islands/solution.java) | [README.md](0200-number-of-islands/README.md) |
 | `0202` | [Happy Number](https://leetcode.com/problems/happy-number/) | ![Easy](https://img.shields.io/badge/🟢_Easy-10b981?style=flat-square&labelColor=0d1117) | Cycle Detection (Floyd's Algorithm) | $\mathcal{O}(\log N)$ | $\mathcal{O}(1)$ | `1 ms (78.08%)` | [solution.java](0202-happy-number/solution.java) | [README.md](0202-happy-number/README.md) |
 | `0542` | [01 Matrix](https://leetcode.com/problems/01-matrix/) | ![Medium](https://img.shields.io/badge/🟡_Medium-f59e0b?style=flat-square&labelColor=0d1117) | Multi-Source BFS | $\mathcal{O}(R \times C)$ | $\mathcal{O}(R \times C)$ | `13 ms (90.86%)` | [solution.java](0542-01-matrix/solution.java) | [README.md](0542-01-matrix/README.md) |
 | `0721` | [Accounts Merge](https://leetcode.com/problems/accounts-merge/) | ![Medium](https://img.shields.io/badge/🟡_Medium-f59e0b?style=flat-square&labelColor=0d1117) | Disjoint Set / Union-Find | $\mathcal{O}(NK \log NK)$ | $\mathcal{O}(NK)$ | `29 ms (80.41%)` | [solution.java](0721-accounts-merge/solution.java) | [README.md](0721-accounts-merge/README.md) |
+| `0733` | [Flood Fill](https://leetcode.com/problems/flood-fill/) | ![Easy](https://img.shields.io/badge/🟢_Easy-10b981?style=flat-square&labelColor=0d1117) | Grid DFS / Wave Propagation | $\mathcal{O}(N)$ | $\mathcal{O}(N)$ | `⚡ 0 ms (100.00%)` | [solution.java](0733-flood-fill/solution.java) | [README.md](0733-flood-fill/README.md) |
+| `0929` | [Unique Email Addresses](https://leetcode.com/problems/unique-email-addresses/) | ![Easy](https://img.shields.io/badge/🟢_Easy-10b981?style=flat-square&labelColor=0d1117) | String Manipulation & HashSet | $\mathcal{O}(N \times L)$ | $\mathcal{O}(N \times L)$ | `13 ms (52.32%)` | [solution.java](0929-unique-email-addresses/solution.java) | [README.md](0929-unique-email-addresses/README.md) |
 | `1129` | [Shortest Path with Alternating Colors](https://leetcode.com/problems/shortest-path-with-alternating-colors/) | ![Medium](https://img.shields.io/badge/🟡_Medium-f59e0b?style=flat-square&labelColor=0d1117) | BFS with Edge States | $\mathcal{O}(V + E)$ | $\mathcal{O}(V + E)$ | `11 ms (12.61%)` | [solution.java](1129-shortest-path-with-alternating-colors/solution.java) | [README.md](1129-shortest-path-with-alternating-colors/README.md) |
 | `1203` | [Sort Items by Groups Respecting Dependencies](https://leetcode.com/problems/sort-items-by-groups-respecting-dependencies/) | ![Hard](https://img.shields.io/badge/🔴_Hard-ef4444?style=flat-square&labelColor=0d1117) | Multi-Level Topological Sort | $\mathcal{O}(V + E)$ | $\mathcal{O}(V + E)$ | `41 ms (31.01%)` | [solution.java](1203-sort-items-by-groups-respecting-dependencies/solution.java) | [README.md](1203-sort-items-by-groups-respecting-dependencies/README.md) |
 
@@ -127,6 +131,18 @@ for (Pair<Integer, Color> neighbor : graph[u]) {
 
 ## 🔍 Per-Problem Analytical Breakdown
 
+### `0049` • Group Anagrams
+- **What it's really asking:** Group strings that have the exact same characters in the exact same frequencies.
+- **Concept:** Sort each string to create a canonical key, or use a frequency array converted to a string as the key. Store in a HashMap mapping `Key -> List of Strings`.
+- **Complexity:** Time: $\mathcal{O}(N \times K \log K)$ | Space: $\mathcal{O}(NK)$.
+- **Edge Cases:** Empty strings, identical strings, strings with one character.
+
+### `0200` • Number of Islands
+- **What it's really asking:** Count the distinct connected components of `1`s (land) in a grid.
+- **Concept:** Iterate through every cell. Upon finding an unvisited `1`, increment island count and launch a DFS/BFS to mark the entire component as visited (or mutate to `0`).
+- **Complexity:** Time: $\mathcal{O}(R \times C)$ | Space: $\mathcal{O}(R \times C)$ (call stack).
+- **Edge Cases:** All water, all land, zig-zag island patterns.
+
 ### `0202` • Happy Number
 - **What it's really asking:** Is there a cycle when repeatedly summing the squares of digits, or does it reach 1?
 - **Concept:** This is implicitly a directed graph where edges are the sum-of-squares mathematical function. You can solve it using a `HashSet` to detect revisitation, OR use Floyd's Fast & Slow pointers (Tortoise and Hare) for $\mathcal{O}(1)$ space cycle detection!
@@ -148,6 +164,18 @@ for (Pair<Integer, Color> neighbor : graph[u]) {
   4. Sort emails per group.
 - **Complexity:** Time: $\mathcal{O}(NK \log NK)$ due to sorting merged emails | Space: $\mathcal{O}(NK)$.
 - **Edge Cases:** Same names but completely disjoint emails (different people), single massive chain of interconnected accounts.
+
+### `0733` • Flood Fill
+- **What it's really asking:** Given a starting pixel, change its color and all connected pixels of the same original color to a new color.
+- **Concept:** Standard DFS/BFS grid traversal. Only visit neighbors that match the original starting color. 
+- **Complexity:** Time: $\mathcal{O}(N)$ | Space: $\mathcal{O}(N)$ where N is number of pixels.
+- **Edge Cases:** Starting pixel is already the target color (must return immediately to avoid infinite loop!).
+
+### `0929` • Unique Email Addresses
+- **What it's really asking:** Normalize email addresses according to rules (`.` ignored, `+` truncates) and count unique recipients.
+- **Concept:** String manipulation. Split into local and domain. Remove `.` and truncate at `+` for local part. Add `local + "@" + domain` to a `HashSet` to count unique values.
+- **Complexity:** Time: $\mathcal{O}(N \times L)$ | Space: $\mathcal{O}(N \times L)$.
+- **Edge Cases:** Emails with no `.` or `+`, multiple `+` symbols (only the first matters).
 
 ### `1129` • Shortest Path with Alternating Colors
 - **What it's really asking:** Shortest path from node `0` to every node, strictly alternating red and blue edges.
